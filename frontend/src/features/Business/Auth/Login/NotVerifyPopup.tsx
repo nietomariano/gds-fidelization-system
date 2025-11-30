@@ -32,8 +32,10 @@ function NotVerifyPopup() {
     handleClose();
   };
 
-  const handleError = (error: ApiError) => {
-    toast.error(error.data?.title, { description: error.data?.message });
+  const handleError = (error: any) => {
+    const fullError = JSON.stringify(error.response ?? error, null, 2);
+
+    toast.error(fullError);
   };
 
   const handleResendEmail = () => {

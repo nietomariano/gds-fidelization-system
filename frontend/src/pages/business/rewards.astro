@@ -1,8 +1,10 @@
 ---
 import BusinessLayout from "../../layouts/Business/BusinessLayout.astro";
-import UnderConstruction from "../../layouts/UnderConstruction.astro";
+import RewardFeature from "../../features/Business/Reward/Reward.tsx";
+
 ---
 
 <BusinessLayout title='Recompensas'>
-  <UnderConstruction />
+  <RewardFeature client:load />
 </BusinessLayout>
+

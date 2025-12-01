@@ -62,6 +62,7 @@ cd backend
 2. Copiar el archivo de configuración:
 
 ```bash
+
 cp .env.example .env
 ```
 

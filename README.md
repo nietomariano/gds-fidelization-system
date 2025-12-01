@@ -39,6 +39,6 @@ Aplicación web desarrollada con **Astro** que proporciona la interfaz de usuari
 - Tailwind CSS
 - React (para componentes interactivos)
 
-## API DOCS
+## API DOCS  S
 
 https://ertmtixym1.apidog.io/

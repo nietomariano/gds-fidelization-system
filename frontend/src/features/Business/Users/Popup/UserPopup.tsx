@@ -216,7 +216,7 @@ function UserPopup() {
                       id='email'
                       aria-invalid={fieldState.invalid}
                       placeholder='usuario@email.com'
-                      disabled
+                      disabled={$data.isActive}
                       autoComplete='off'
                     />
 

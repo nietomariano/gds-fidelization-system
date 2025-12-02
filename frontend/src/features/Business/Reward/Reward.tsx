@@ -1,6 +1,6 @@
 import React from "react";
-import { UsersService } from "../../../api/business/users/users.service";
-import { useState } from "react"
+import { RewardsService } from "../../../api/business/reward/reward.service";
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -9,38 +9,82 @@ import { Trash2, Plus, Gift } from "lucide-react"
 interface Reward {
   id: string
   name: string
-  points: number
+  cost: number
 }
 
 
-//const service = new RewardService();
+const service = new RewardsService();
 
 function RecompensasPage() {
-const [rewards, setRewards] = useState<Reward[]>([
-    { id: "1", name: "Café gratis", points: 100 },
-    { id: "2", name: "10% de descuento", points: 250 },
-    { id: "3", name: "Producto gratis", points: 500 },
-  ])
-
+  const [rewards, setRewards] = useState<Reward[]>([])
   const [newRewardName, setNewRewardName] = useState("")
   const [newRewardPoints, setNewRewardPoints] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleCreate = () => {
-    if (!newRewardName.trim() || !newRewardPoints) return
+  // Cargar recompensas al montar el componente
+  useEffect(() => {
+    loadRewards()
+  }, [])
 
-    const newReward: Reward = {
-      id: Date.now().toString(),
-      name: newRewardName.trim(),
-      points: Number.parseInt(newRewardPoints),
+  const loadRewards = async () => {
+    try {
+      setIsLoading(true)
+      console.log('Cargando recompensas...')
+      const response = await service.getRewards()
+      console.log('Respuesta del servidor:', response)
+      setRewards(response.data.rewards)
+    } catch (error) {
+      console.error('Error al cargar recompensas:', error)
+    } finally {
+      setIsLoading(false)
     }
-
-    setRewards([...rewards, newReward])
-    setNewRewardName("")
-    setNewRewardPoints("")
   }
 
-  const handleDelete = (id: string) => {
-    setRewards(rewards.filter((reward) => reward.id !== id))
+  const handleCreate = async () => {
+    if (!newRewardName.trim() || !newRewardPoints) {
+      console.log('Validación falló:', { newRewardName, newRewardPoints })
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      console.log('Creando recompensa:', {
+        name: newRewardName.trim(),
+        cost: Number.parseInt(newRewardPoints),
+      })
+      
+      const response = await service.createReward({
+        name: newRewardName.trim(),
+        cost: Number.parseInt(newRewardPoints),
+      })
+      
+      console.log('Recompensa creada:', response)
+      
+      // Recargar la lista después de crear
+      await loadRewards()
+      
+      setNewRewardName("")
+      setNewRewardPoints("")
+    } catch (error) {
+      console.error('Error al crear recompensa:', error)
+      alert('Error al crear recompensa. Revisa la consola.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      setIsLoading(true)
+      await service.deleteReward(id)
+      
+      // Recargar la lista después de eliminar
+      await loadRewards()
+    } catch (error) {
+      console.error('Error al eliminar recompensa:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -73,9 +117,9 @@ const [rewards, setRewards] = useState<Reward[]>([
                 onChange={(e) => setNewRewardPoints(e.target.value)}
               />
             </div>
-            <Button onClick={handleCreate} className="gap-2">
+            <Button onClick={handleCreate} className="gap-2" disabled={isLoading}>
               <Plus className="w-4 h-4" />
-              Crear
+              {isLoading ? 'Creando...' : 'Crear'}
             </Button>
           </div>
         </Card>
@@ -101,7 +145,7 @@ const [rewards, setRewards] = useState<Reward[]>([
                     </div>
                     <div>
                       <h3 className="font-medium text-foreground">{reward.name}</h3>
-                      <p className="text-sm text-muted-foreground">{reward.points} puntos</p>
+                      <p className="text-sm text-muted-foreground">{reward.cost} puntos</p>
                     </div>
                   </div>
                   <Button
@@ -109,6 +153,7 @@ const [rewards, setRewards] = useState<Reward[]>([
                     size="icon"
                     onClick={() => handleDelete(reward.id)}
                     className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    disabled={isLoading}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

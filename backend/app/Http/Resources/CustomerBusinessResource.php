@@ -15,7 +15,7 @@ class CustomerBusinessResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "customer" => new CustomerResource($this->whenLoaded('customer')),
+            "customer" => CustomerResource::make($this->whenLoaded('customer')),
             "customerId" => $this->when(!$this->relationLoaded('customer'), $this->customer_id),
             "businessId" => $this->business_id,
             "createdAt" => $this->created_at,

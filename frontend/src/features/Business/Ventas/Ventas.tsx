@@ -1,5 +1,5 @@
 import React from "react";
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,11 +14,19 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card } from "@/components/ui/card"
-import { Plus, Search, Filter, Calendar, UserPlus, Check, Gift } from "lucide-react"
+import { Plus, Search, Filter, Calendar, UserPlus, Check, Gift, Loader2 } from "lucide-react"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { PurchaseService } from "@/api/business/purchase/purchase.service"
+import { CustomersService } from "@/api/business/customers/customers.service"
+import { RewardsService } from "@/api/business/reward/reward.service"
+import type { PurchaseModel } from "@/api/business/purchase/purchase.types"
+import type { CustomerBusinessModel } from "@/api/types/Models/CustomerBusinessModel"
+import type { RewardModel } from "@/api/types/Models/RewardModel"
 
+// UI type for simplified customer display
 type Cliente = {
+  id: string
   nombre: string
   telefono: string
   puntosAcumulados: number
@@ -35,82 +43,26 @@ type Venta = {
   metodoPago: string
 }
 
-type Recompensa = {
-  id: string
-  name: string
-  points: number
+const purchaseService = new PurchaseService()
+const customersService = new CustomersService()
+const rewardsService = new RewardsService()
+
+// Helper function to translate payment methods
+const getPaymentMethodLabel = (method: string): string => {
+  const labels: Record<string, string> = {
+    cash: 'Efectivo',
+    card: 'Tarjeta',
+    bank_transfer: 'Transferencia'
+  }
+  return labels[method] || method
 }
 
-
-//const service = new UsersService();
-
 function VentasPage() {
-const [clientes, setClientes] = useState<Cliente[]>([
-    { nombre: "María González", telefono: "+54 11 2345-6789", puntosAcumulados: 450 },
-    { nombre: "Juan Pérez", telefono: "+54 11 3456-7890", puntosAcumulados: 180 },
-    { nombre: "Ana Martínez", telefono: "+54 11 4567-8901", puntosAcumulados: 620 },
-    { nombre: "Carlos López", telefono: "+54 11 5678-9012", puntosAcumulados: 95 },
-    { nombre: "Laura Rodríguez", telefono: "+54 11 6789-0123", puntosAcumulados: 310 },
-  ])
-
-  const [ventas, setVentas] = useState<Venta[]>([
-    {
-      id: "V-001",
-      fecha: "2025-01-15",
-      hora: "14:30",
-      cliente: "María González",
-      telefono: "+54 11 2345-6789",
-      monto: 15000,
-      puntos: 150,
-      metodoPago: "Tarjeta",
-    },
-    {
-      id: "V-002",
-      fecha: "2025-01-15",
-      hora: "16:45",
-      cliente: "Juan Pérez",
-      telefono: "+54 11 3456-7890",
-      monto: 8500,
-      puntos: 85,
-      metodoPago: "Efectivo",
-    },
-    {
-      id: "V-003",
-      fecha: "2025-01-14",
-      hora: "11:20",
-      cliente: "Ana Martínez",
-      telefono: "+54 11 4567-8901",
-      monto: 22000,
-      puntos: 220,
-      metodoPago: "Transferencia",
-    },
-    {
-      id: "V-004",
-      fecha: "2025-01-14",
-      hora: "18:15",
-      cliente: "Carlos López",
-      telefono: "+54 11 5678-9012",
-      monto: 12500,
-      puntos: 125,
-      metodoPago: "Tarjeta",
-    },
-    {
-      id: "V-005",
-      fecha: "2025-01-13",
-      hora: "10:00",
-      cliente: "Laura Rodríguez",
-      telefono: "+54 11 6789-0123",
-      monto: 5000,
-      puntos: 50,
-      metodoPago: "Efectivo",
-    },
-  ])
-
-  const [recompensas] = useState<Recompensa[]>([
-    { id: "1", name: "Café gratis", points: 100 },
-    { id: "2", name: "10% de descuento", points: 250 },
-    { id: "3", name: "Mariano kpo", points: 500 },
-  ])
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [ventas, setVentas] = useState<Venta[]>([])
+  const [recompensas, setRecompensas] = useState<RewardModel[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isCreating, setIsCreating] = useState(false)
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
@@ -119,55 +71,158 @@ const [clientes, setClientes] = useState<Cliente[]>([
 
   const [openClienteCombobox, setOpenClienteCombobox] = useState(false)
   const [mostrarFormNuevoCliente, setMostrarFormNuevoCliente] = useState(false)
-  const [nuevoCliente, setNuevoCliente] = useState({ nombre: "", telefono: "", puntosAcumulados: 0 })
+  const [nuevoCliente, setNuevoCliente] = useState({ nombre: "", telefono: "" })
 
   const [nuevaVenta, setNuevaVenta] = useState({
-    cliente: "",
+    clienteId: "",
+    clienteNombre: "",
     monto: "",
-    metodoPago: "efectivo",
+    metodoPago: "cash",
   })
 
-  const handleAgregarCliente = () => {
-    if (!nuevoCliente.nombre || !nuevoCliente.telefono) return
+  // Load initial data
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true)
+        
+        const [purchasesRes, customersRes, rewardsRes] = await Promise.all([
+          purchaseService.getPurchases({ per_page: 100 }),
+          customersService.getCustomers({ per_page: 100 }),
+          rewardsService.getRewards({ per_page: 100 })
+        ])
 
-    setClientes([...clientes, nuevoCliente])
-    setNuevaVenta({ ...nuevaVenta, cliente: nuevoCliente.nombre })
-    setNuevoCliente({ nombre: "", telefono: "", puntosAcumulados: 0 })
-    setMostrarFormNuevoCliente(false)
-    setOpenClienteCombobox(false)
-  }
+        // Map purchases to Venta format
+        const mappedPurchases: Venta[] = purchasesRes.data.purchases.map((p: PurchaseModel) => ({
+          id: p.id,
+          fecha: new Date(p.created_at).toISOString().split("T")[0],
+          hora: new Date(p.created_at).toTimeString().slice(0, 5),
+          cliente: p.customer ? `${p.customer.firstName} ${p.customer.lastName || ""}`.trim() : "N/A",
+          telefono: p.customer?.phoneNumber || "",
+          monto: p.amount,
+          puntos: p.points,
+          metodoPago: p.payment_method,
+        }))
 
-  const handleCrearVenta = () => {
-    if (!nuevaVenta.cliente || !nuevaVenta.monto) return
+        // Map customers to Cliente format (from CustomerBusinessResource)
+        console.log('Customers response:', customersRes)
+        const customerData: CustomerBusinessModel[] = Array.isArray(customersRes.data) ? customersRes.data : []
+        console.log('Customer data array:', customerData)
+        
+        const mappedClientes: Cliente[] = customerData
+          .filter((cb) => cb?.customer) // Filter out items without customer
+          .map((cb) => {
+            const customer = cb.customer
+            
+            return {
+              id: customer.id,
+              nombre: `${customer.firstName} ${customer.lastName || ""}`.trim(),
+              telefono: customer.phoneNumber,
+              puntosAcumulados: cb.cachedPoints,
+            }
+          })
+        
+        console.log('Mapped clientes:', mappedClientes)
 
-    const monto = Number.parseFloat(nuevaVenta.monto)
-    const puntos = Math.floor(monto / 100)
-
-    const now = new Date()
-    const fecha = now.toISOString().split("T")[0]
-    const hora = now.toTimeString().slice(0, 5)
-
-    const clienteSeleccionado = clientes.find((c) => c.nombre === nuevaVenta.cliente)
-
-    const venta: Venta = {
-      id: `V-${String(ventas.length + 1).padStart(3, "0")}`,
-      fecha,
-      hora,
-      cliente: nuevaVenta.cliente,
-      telefono: clienteSeleccionado?.telefono || "",
-      monto,
-      puntos,
-      metodoPago:
-        nuevaVenta.metodoPago === "efectivo"
-          ? "Efectivo"
-          : nuevaVenta.metodoPago === "tarjeta"
-            ? "Tarjeta"
-            : "Transferencia",
+        setVentas(mappedPurchases)
+        setClientes(mappedClientes)
+        setRecompensas(rewardsRes.data.rewards)
+      } catch (error) {
+        console.error("Error loading data:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    setVentas([venta, ...ventas])
-    setNuevaVenta({ cliente: "", monto: "", metodoPago: "efectivo" })
-    setIsDialogOpen(false)
+    loadData()
+  }, [])
+
+  const handleAgregarCliente = async () => {
+    if (!nuevoCliente.nombre || !nuevoCliente.telefono) return
+
+    try {
+      const [firstName, ...lastNameParts] = nuevoCliente.nombre.split(" ")
+      const lastName = lastNameParts.join(" ")
+
+      const response = await customersService.createCustomer({
+        first_name: firstName,
+        last_name: lastName || undefined,
+        phone_number: nuevoCliente.telefono,
+      })
+
+      // Reload customers after creation
+      const customersRes = await customersService.getCustomers({ per_page: 100 })
+      const customerData: CustomerBusinessModel[] = Array.isArray(customersRes.data) ? customersRes.data : []
+      const mappedClientes: Cliente[] = customerData
+        .filter((cb) => cb?.customer) // Filter out items without customer
+        .map((cb) => {
+          const customer = cb.customer
+          
+          return {
+            id: customer.id,
+            nombre: `${customer.firstName} ${customer.lastName || ""}`.trim(),
+            telefono: customer.phoneNumber,
+            puntosAcumulados: cb.cachedPoints,
+          }
+        })
+      
+      setClientes(mappedClientes)
+      const newCliente = mappedClientes.find(c => c.telefono === nuevoCliente.telefono)
+      if (newCliente) {
+        setNuevaVenta({ ...nuevaVenta, clienteId: newCliente.id, clienteNombre: newCliente.nombre })
+      }
+      
+      setNuevoCliente({ nombre: "", telefono: "" })
+      setMostrarFormNuevoCliente(false)
+      setOpenClienteCombobox(false)
+    } catch (error) {
+      console.error("Error creating customer:", error)
+    }
+  }
+
+  const handleCrearVenta = async () => {
+    if (!nuevaVenta.clienteId || !nuevaVenta.monto) return
+
+    try {
+      setIsCreating(true)
+      const monto = Number.parseFloat(nuevaVenta.monto)
+      const puntos = Math.floor(monto / 100)
+
+      const response = await purchaseService.createPurchase({
+        customer_id: nuevaVenta.clienteId,
+        amount: monto,
+        points: puntos,
+        payment_method: nuevaVenta.metodoPago,
+      })
+
+      const newPurchase = response.data.purchase
+      const venta: Venta = {
+        id: newPurchase.id,
+        fecha: new Date(newPurchase.created_at).toISOString().split("T")[0],
+        hora: new Date(newPurchase.created_at).toTimeString().slice(0, 5),
+        cliente: nuevaVenta.clienteNombre,
+        telefono: clientes.find(c => c.id === nuevaVenta.clienteId)?.telefono || "",
+        monto: newPurchase.amount,
+        puntos: newPurchase.points,
+        metodoPago: newPurchase.payment_method,
+      }
+
+      setVentas([venta, ...ventas])
+      
+      // Update cliente points
+      setClientes(clientes.map(c => 
+        c.id === nuevaVenta.clienteId 
+          ? { ...c, puntosAcumulados: c.puntosAcumulados + puntos }
+          : c
+      ))
+
+      setNuevaVenta({ clienteId: "", clienteNombre: "", monto: "", metodoPago: "cash" })
+      setIsDialogOpen(false)
+    } catch (error) {
+      console.error("Error creating purchase:", error)
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   const ventasFiltradas = ventas.filter((venta) => {
@@ -189,7 +244,18 @@ const [clientes, setClientes] = useState<Cliente[]>([
     const cliente = clientes.find((c) => c.nombre === clienteNombre)
     if (!cliente) return []
 
-    return recompensas.filter((r) => r.points <= cliente.puntosAcumulados)
+    return recompensas.filter((r) => r.cost <= cliente.puntosAcumulados)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="bg-background min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Cargando ventas...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -226,11 +292,11 @@ const [clientes, setClientes] = useState<Cliente[]>([
                           aria-expanded={openClienteCombobox}
                           className="w-full justify-between bg-transparent"
                         >
-                          {nuevaVenta.cliente || "Buscar por nombre o teléfono..."}
+                          {nuevaVenta.clienteNombre || "Buscar por nombre o teléfono..."}
                           <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                         <Command>
                           <CommandInput placeholder="Buscar cliente..." />
                           <CommandList>
@@ -251,15 +317,15 @@ const [clientes, setClientes] = useState<Cliente[]>([
                             <CommandGroup>
                               {clientes.map((cliente) => (
                                 <CommandItem
-                                  key={cliente.telefono}
+                                  key={cliente.id}
                                   value={`${cliente.nombre} ${cliente.telefono}`}
                                   onSelect={() => {
-                                    setNuevaVenta({ ...nuevaVenta, cliente: cliente.nombre })
+                                    setNuevaVenta({ ...nuevaVenta, clienteId: cliente.id, clienteNombre: cliente.nombre })
                                     setOpenClienteCombobox(false)
                                   }}
                                 >
                                   <Check
-                                    className={`mr-2 h-4 w-4 ${nuevaVenta.cliente === cliente.nombre ? "opacity-100" : "opacity-0"}`}
+                                    className={`mr-2 h-4 w-4 ${nuevaVenta.clienteNombre === cliente.nombre ? "opacity-100" : "opacity-0"}`}
                                   />
                                   <div className="flex flex-col">
                                     <span className="font-medium">{cliente.nombre}</span>
@@ -274,27 +340,27 @@ const [clientes, setClientes] = useState<Cliente[]>([
                     </Popover>
                   </div>
 
-                  {nuevaVenta.cliente && getRecompensasDisponibles(nuevaVenta.cliente).length > 0 && (
+                  {nuevaVenta.clienteNombre && getRecompensasDisponibles(nuevaVenta.clienteNombre).length > 0 && (
                     <Card className="p-4 bg-accent/30 border-primary/20">
                       <div className="flex items-center gap-2 mb-3">
                         <Gift className="h-4 w-4 text-primary" />
                         <h3 className="font-semibold text-sm text-foreground">Beneficios disponibles</h3>
                       </div>
                       <div className="space-y-2">
-                        {getRecompensasDisponibles(nuevaVenta.cliente).map((recompensa) => (
+                        {getRecompensasDisponibles(nuevaVenta.clienteNombre).map((recompensa) => (
                           <div
                             key={recompensa.id}
                             className="flex items-center justify-between p-2 rounded-md bg-background/50"
                           >
                             <span className="text-sm font-medium text-foreground">{recompensa.name}</span>
-                            <span className="text-xs text-muted-foreground">{recompensa.points} pts</span>
+                            <span className="text-xs text-muted-foreground">{recompensa.cost} pts</span>
                           </div>
                         ))}
                       </div>
                       <p className="text-xs text-muted-foreground mt-3">
                         Puntos actuales:{" "}
                         <span className="font-semibold text-foreground">
-                          {clientes.find((c) => c.nombre === nuevaVenta.cliente)?.puntosAcumulados} pts
+                          {clientes.find((c) => c.id === nuevaVenta.clienteId)?.puntosAcumulados} pts
                         </span>
                       </p>
                     </Card>
@@ -309,7 +375,7 @@ const [clientes, setClientes] = useState<Cliente[]>([
                           size="sm"
                           onClick={() => {
                             setMostrarFormNuevoCliente(false)
-                            setNuevoCliente({ nombre: "", telefono: "", puntosAcumulados: 0 })
+                            setNuevoCliente({ nombre: "", telefono: "" })
                           }}
                         >
                           Cancelar
@@ -360,9 +426,9 @@ const [clientes, setClientes] = useState<Cliente[]>([
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="efectivo">Efectivo</SelectItem>
-                        <SelectItem value="tarjeta">Tarjeta</SelectItem>
-                        <SelectItem value="transferencia">Transferencia</SelectItem>
+                        <SelectItem value="cash">Efectivo</SelectItem>
+                        <SelectItem value="card">Tarjeta</SelectItem>
+                        <SelectItem value="bank_transfer">Transferencia</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -376,10 +442,19 @@ const [clientes, setClientes] = useState<Cliente[]>([
                   )}
                 </div>
                 <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isCreating}>
                     Cancelar
                   </Button>
-                  <Button onClick={handleCrearVenta}>Registrar Venta</Button>
+                  <Button onClick={handleCrearVenta} disabled={isCreating}>
+                    {isCreating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Registrando...
+                      </>
+                    ) : (
+                      "Registrar Venta"
+                    )}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -428,9 +503,9 @@ const [clientes, setClientes] = useState<Cliente[]>([
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="efectivo">Efectivo</SelectItem>
-                  <SelectItem value="tarjeta">Tarjeta</SelectItem>
-                  <SelectItem value="transferencia">Transferencia</SelectItem>
+                  <SelectItem value="cash">Efectivo</SelectItem>
+                  <SelectItem value="card">Tarjeta</SelectItem>
+                  <SelectItem value="bank_transfer">Transferencia</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -492,7 +567,7 @@ const [clientes, setClientes] = useState<Cliente[]>([
                               +{venta.puntos} pts
                             </span>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">{venta.metodoPago}</TableCell>
+                          <TableCell className="whitespace-nowrap">{getPaymentMethodLabel(venta.metodoPago)}</TableCell>
                         </TableRow>
                       ))
                     )}

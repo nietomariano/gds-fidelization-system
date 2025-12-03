@@ -4,6 +4,7 @@ use App\Http\Controllers\Business\AuthController as BusinessAuthController;
 use App\Http\Controllers\Business\CustomerController;
 use App\Http\Controllers\Business\UserController;
 use App\Http\Controllers\Business\RewardController;
+use App\Http\Controllers\Business\PurchaseController;
 use App\Http\Controllers\ContactController;
 use Illuminate\Support\Facades\Route;
 
@@ -80,6 +81,17 @@ Route::prefix('business')->group(function () {
         Route::put('/{reward}', 'update'); // PUT update
 
         Route::delete('/{rewardId}', 'delete'); // DELETE
+    });
+
+    // -------------------------
+    // PURCHASES
+    // -------------------------
+    Route::prefix('purchases')->controller(PurchaseController::class)
+        ->middleware('auth:sanctum')->group(function () {
+
+        Route::get('/', 'get');           // GET list with filters
+
+        Route::post('/', 'create');       // POST create purchase
     });
 });
 

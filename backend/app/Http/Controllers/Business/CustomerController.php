@@ -32,14 +32,14 @@ class CustomerController extends Controller {
 
       if ($customerBusiness && $customerBusiness->deleted_at === null) {
         throwAppError('El número de teléfono pertenece a un cliente ya registrado.', 400, [
-          'customer' => $customerBusiness->customer->toResource()
+          'customer' => new \App\Http\Resources\CustomerResource($customerBusiness->customer)
         ], ErrorSubCode::PHONE_NUMBER_ALREADY_USED_BY_ANOTHER_CUSTOMER);
       } 
 
       if ($customerBusiness && $customerBusiness->deleted_at !== null) {
         $query->restore();
 
-        return successResponse('Cliente creado exitosamente', ['customer' => $customer->toResource()], 201);
+        return successResponse('Cliente creado exitosamente', ['customer' => new \App\Http\Resources\CustomerResource($customer)], 201);
       }
 
       $customerBusiness = CustomerBusiness::create([
@@ -48,7 +48,7 @@ class CustomerController extends Controller {
           'cached_points' => 0
         ]);
 
-      return successResponse('Cliente creado exitosamente', ['customer' => $customer->toResource()], 201);
+      return successResponse('Cliente creado exitosamente', ['customer' => new \App\Http\Resources\CustomerResource($customer)], 201);
     }
 
     $customer = DB::transaction(function () use ($validated, $phone_number, $user) {
@@ -69,7 +69,7 @@ class CustomerController extends Controller {
     });
 
 
-    return successResponse('Cliente creado exitosamente', ['customer' => $customer], 201);
+    return successResponse('Cliente creado exitosamente', ['customer' => new \App\Http\Resources\CustomerResource($customer)], 201);
   }  
 
   public function get(GetPaginatedCustomersRequest $request) {
@@ -108,7 +108,22 @@ class CustomerController extends Controller {
 
     $customers = $query->with('customer')->paginate($perPage, ['*'], 'page', $page);
 
-    return paginatedResponse('Clientes obtenidos exitosamente', $customers);
+    return response()->json([
+      'success' => true,
+      'message' => 'Clientes obtenidos exitosamente',
+      'status' => 200,
+      'data' => \App\Http\Resources\CustomerBusinessResource::collection($customers->items())->resolve(),
+      'pagination' => [
+        'total' => $customers->total(),
+        'perPage' => $customers->perPage(),
+        'currentPage' => $customers->currentPage(),
+        'lastPage' => $customers->lastPage(),
+        'from' => $customers->firstItem(),
+        'to' => $customers->lastItem(),
+        'hasNextPage' => $customers->hasMorePages(),
+        'hasPreviousPage' => $customers->currentPage() > 1
+      ],
+    ]);
   }
 
   public function update(UpdateCustomerRequest $request, Customer $customer): JsonResponse {
@@ -118,7 +133,7 @@ class CustomerController extends Controller {
       throwAppError('No puedes modificar un cliente que se ha registrado en la aplicación.', 400, [
         'title' => 'Cliente registrado en la app',
         'message' => 'El cliente ' . $customer->first_name . ' ' . $customer->last_name . ' se ha registrado en la aplicación y por lo tanto solo él puede modificar sus datos.',
-        'customer' => $customer->toResource()       
+        'customer' => new \App\Http\Resources\CustomerResource($customer)       
       ], ErrorSubCode::CUSTOMER_ALREADY_VERIFIED);
     }
 

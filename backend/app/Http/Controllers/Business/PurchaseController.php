@@ -10,6 +10,7 @@ use App\Models\Purchase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseController extends Controller
 {
@@ -94,21 +95,33 @@ class PurchaseController extends Controller
             'payment_method' => $data['payment_method'],
         ]);
 
-        // Update or create customer_business relation
-        $customerBusiness = CustomerBusiness::firstOrCreate(
-            [
+        // Update or create customer_business relation using DB query
+        $customerBusiness = CustomerBusiness::where([
+            'business_id' => $businessId,
+            'customer_id' => $data['customer_id'],
+        ])->first();
+
+        if ($customerBusiness) {
+            // Update existing record using raw query
+            \DB::table('customer_business')
+                ->where('business_id', $businessId)
+                ->where('customer_id', $data['customer_id'])
+                ->update([
+                    'cached_points' => \DB::raw('cached_points + ' . $data['points']),
+                    'total_visits' => \DB::raw('total_visits + 1'),
+                    'last_visit_at' => now(),
+                    'updated_at' => now(),
+                ]);
+        } else {
+            // Create new record
+            CustomerBusiness::create([
                 'business_id' => $businessId,
                 'customer_id' => $data['customer_id'],
-            ],
-            [
-                'cached_points' => 0,
-                'total_visits' => 0,
-            ]
-        );
-
-        $customerBusiness->cached_points += $data['points'];
-        $customerBusiness->total_visits += 1;
-        $customerBusiness->save();
+                'cached_points' => $data['points'],
+                'total_visits' => 1,
+                'last_visit_at' => now(),
+            ]);
+        }
 
         // Record in points ledger
         PointsLedger::create([

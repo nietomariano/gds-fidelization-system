@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @property string $id
@@ -37,12 +39,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Customer whereUpdatedAt($value)
  * @mixin \Eloquent
  */
-class Customer extends Model
+class Customer extends Authenticatable
 {
     use HasUuids;
     use SoftDeletes;
+    use HasApiTokens;
 
-    protected $fillable = ['first_name', 'last_name', 'phone_number', 'phone_validated_at', 'profile_picture', 'email'];
+    protected $fillable = ['first_name', 'last_name', 'phone_number', 'phone_validated_at', 'profile_picture', 'email', 'password'];
+    
+    protected $hidden = ['password'];
 
     public function businesses(): BelongsToMany {
         return $this->belongsToMany(Business::class, 'customer_business')

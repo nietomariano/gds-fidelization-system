@@ -1,0 +1,32 @@
+---
+import AuthLayout from "../../layouts/Auth/AuthLayout.astro";
+import type { CardProps } from "../../layouts/Auth/Card.astro";
+import { Gift, Store, TrendingUp } from "@lucide/astro";
+import Form from "../../features/Customer/Auth/Register/Form";
+
+const cards: [CardProps, CardProps, CardProps] = [
+  {
+    icon: Store,
+    title: "Múltiples comercios",
+    description: "Acumula puntos en todos tus comercios favoritos",
+  },
+  {
+    icon: TrendingUp,
+    title: "Seguimiento en tiempo real",
+    description: "Consulta tus puntos actualizados al instante",
+  },
+  {
+    icon: Gift,
+    title: "Canjea recompensas",
+    description: "Obtén beneficios exclusivos con tus puntos",
+  },
+];
+---
+
+<AuthLayout
+  cards={cards}
+  title='Comienza a acumular puntos hoy'
+  description='Crea tu cuenta y empieza a disfrutar de beneficios en todos los comercios participantes.'
+>
+  <Form client:load />
+</AuthLayout>

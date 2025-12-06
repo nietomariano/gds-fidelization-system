@@ -1,0 +1,42 @@
+---
+import CustomerLayout from "../../../layouts/Customer/CustomerLayout.astro";
+import { Store } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { BusinessCard } from "@/components/Customer/BusinessCard";
+
+// TODO: Obtener estos datos del backend
+const businessesWithPoints: any[] = [];
+---
+
+<CustomerLayout title="Mis Comercios">
+  <div class="space-y-6">
+    <div>
+      <h2 class="text-3xl font-bold tracking-tight">Mis Comercios</h2>
+      <p class="text-muted-foreground">Comercios donde tienes puntos acumulados</p>
+    </div>
+
+    {businessesWithPoints.length === 0 ? (
+      <Card>
+        <CardContent className="p-12">
+          <div class="flex flex-col items-center justify-center text-center">
+            <Store className="mb-4 size-16 text-muted-foreground" />
+            <h3 class="text-lg font-semibold mb-2">No tienes comercios aún</h3>
+            <p class="text-sm text-muted-foreground">Comienza a acumular puntos en tus comercios favoritos</p>
+          </div>
+        </CardContent>
+      </Card>
+    ) : (
+      <div class="grid gap-4">
+        {businessesWithPoints.map((item: any) => (
+          <BusinessCard
+            client:load
+            business={item.business}
+            points={item.points}
+            showPoints={true}
+            showActions={true}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+</CustomerLayout>

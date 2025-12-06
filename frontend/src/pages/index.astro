@@ -1,0 +1,127 @@
+---
+import { Store, User } from "@lucide/astro";
+import { Pathname } from "@/config/Pathname";
+import { APP_NAME } from "@/config/app";
+import PublicLayout from "../layouts/PublicLayout.astro";
+
+const portals = [
+  {
+    title: "Portal para Comercios",
+    description: "Gestiona tu negocio, clientes y programa de fidelización",
+    icon: Store,
+    href: Pathname.BUSINESS_DASHBOARD,
+    color: "bg-blue-600 hover:bg-blue-700",
+    features: [
+      "Gestión de clientes",
+      "Sistema de puntos",
+      "Registro de ventas",
+      "Recompensas personalizadas",
+    ],
+  },
+  {
+    title: "Portal para Clientes",
+    description: "Consulta tus puntos y canjea recompensas",
+    icon: User,
+    href: Pathname.CUSTOMER_DASHBOARD,
+    color: "bg-purple-600 hover:bg-purple-700",
+    features: [
+      "Ver mis puntos",
+      "Historial de compras",
+      "Canjear recompensas",
+      "Múltiples comercios",
+    ],
+  },
+];
+---
+
+<PublicLayout>
+  <div class="flex min-h-screen items-center justify-center p-4 md:p-8">
+    <div class="w-full max-w-5xl space-y-8">
+      <div class="text-center space-y-2">
+        <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">
+          {APP_NAME}
+        </h1>
+        <p class="text-muted-foreground">
+          Sistema de fidelización que conecta comercios con sus clientes
+        </p>
+      </div>
+
+      <div class="grid gap-6 md:grid-cols-2">
+        {
+          portals.map((portal) => (
+            <a
+              href={portal.href}
+              class="group block rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md"
+            >
+              <div class="p-6 space-y-4">
+                <div class={`inline-flex h-12 w-12 items-center justify-center rounded-lg ${portal.color}`}>
+                  <portal.icon class="h-6 w-6 text-white" />
+                </div>
+
+                <div class="space-y-2">
+                  <h2 class="text-xl font-semibold tracking-tight">
+                    {portal.title}
+                  </h2>
+                  
+                  <p class="text-sm text-muted-foreground">
+                    {portal.description}
+                  </p>
+                </div>
+
+                <ul class="space-y-2">
+                  {portal.features.map((feature) => (
+                    <li class="flex items-center gap-2 text-sm">
+                      <svg
+                        class="h-4 w-4 flex-shrink-0 text-primary"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div class="flex items-center text-sm font-medium text-primary pt-2">
+                  Acceder al portal
+                  <svg
+                    class="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </a>
+          ))
+        }
+      </div>
+
+      <div class="text-center">
+        <p class="text-sm text-muted-foreground">
+          ¿Aún no tienes cuenta?{" "}
+          <a
+            href={Pathname.REGISTER}
+            class="font-medium text-primary hover:underline"
+          >
+            Registra tu comercio aquí
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</PublicLayout>

@@ -1,0 +1,260 @@
+// Mock data for customer-facing app
+import type {
+  Business,
+  Customer,
+  CustomerBusiness,
+  LoyaltyConfig,
+  PointsLedger,
+  Purchase,
+  Redeem,
+  Reward,
+} from "./types"
+
+export const currentCustomer: Customer = {
+  id: "customer-1",
+  name: "Juan Pérez",
+  email: "juan.perez@example.com",
+  phoneNumber: "+54 9 11 1234-5678",
+  profilePic: "/placeholder-user.jpg",
+}
+
+export const mockBusinesses: Business[] = [
+  {
+    id: "business-1",
+    name: "Café Central",
+    email: "info@cafecentral.com",
+    phoneNumber: "+54 11 4567-8901",
+    address: "Av. Principal 123, CABA",
+    profilePicture: "/cozy-corner-cafe.png",
+    instagramUrl: "https://instagram.com/cafecentral",
+    facebookUrl: "https://facebook.com/cafecentral",
+  },
+  {
+    id: "business-2",
+    name: "Restaurante El Buen Sabor",
+    email: "contacto@elbuensabor.com",
+    phoneNumber: "+54 11 4567-8902",
+    address: "Calle Comercio 456, CABA",
+    profilePicture: "/cozy-italian-restaurant.png",
+    instagramUrl: "https://instagram.com/elbuensabor",
+  },
+  {
+    id: "business-3",
+    name: "Librería Moderna",
+    email: "info@libreriamoderna.com",
+    phoneNumber: "+54 11 4567-8903",
+    address: "Plaza Mayor 789, CABA",
+    profilePicture: "/cozy-bookstore.png",
+  },
+]
+
+export const mockCustomerBusinesses: CustomerBusiness[] = [
+  { business_id: "business-1", customer_id: "customer-1", cached_points: 450 },
+  { business_id: "business-2", customer_id: "customer-1", cached_points: 320 },
+  { business_id: "business-3", customer_id: "customer-1", cached_points: 180 },
+]
+
+export const mockLoyaltyConfigs: LoyaltyConfig[] = [
+  {
+    id: "config-1",
+    business_id: "business-1",
+    baseAmount: 100,
+    pointsAwarded: 10,
+    welcomeEnabled: true,
+    welcomePoints: 50,
+    expirationEnabled: true,
+    expirationDays: 180,
+  },
+  {
+    id: "config-2",
+    business_id: "business-2",
+    baseAmount: 100,
+    pointsAwarded: 15,
+    welcomeEnabled: true,
+    welcomePoints: 100,
+    expirationEnabled: false,
+  },
+  {
+    id: "config-3",
+    business_id: "business-3",
+    baseAmount: 50,
+    pointsAwarded: 5,
+    welcomeEnabled: false,
+    expirationEnabled: true,
+    expirationDays: 365,
+  },
+]
+
+export const mockRewards: Reward[] = [
+  {
+    id: "reward-1",
+    name: "Café Gratis",
+    cost: 100,
+    business_id: "business-1",
+    description: "Un café de cualquier tamaño",
+  },
+  {
+    id: "reward-2",
+    name: "Descuento 20%",
+    cost: 200,
+    business_id: "business-1",
+    description: "20% de descuento en tu próxima compra",
+  },
+  {
+    id: "reward-3",
+    name: "Postre Gratis",
+    cost: 150,
+    business_id: "business-2",
+    description: "Postre del día sin cargo",
+  },
+  {
+    id: "reward-4",
+    name: "10% Descuento",
+    cost: 100,
+    business_id: "business-3",
+    description: "10% de descuento en libros",
+  },
+]
+
+export const mockPurchases: Purchase[] = [
+  {
+    id: "purchase-1",
+    amount: 500,
+    createdAt: "2025-01-10T10:30:00Z",
+    points: 50,
+    business_id: "business-1",
+    customer_id: "customer-1",
+    isVoided: false,
+    paymentMethod: "Tarjeta de crédito",
+  },
+  {
+    id: "purchase-2",
+    amount: 1200,
+    createdAt: "2025-01-08T14:20:00Z",
+    points: 120,
+    business_id: "business-2",
+    customer_id: "customer-1",
+    isVoided: false,
+    paymentMethod: "Efectivo",
+  },
+  {
+    id: "purchase-3",
+    amount: 350,
+    createdAt: "2025-01-05T09:15:00Z",
+    points: 35,
+    business_id: "business-1",
+    customer_id: "customer-1",
+    isVoided: false,
+    paymentMethod: "Débito",
+  },
+  {
+    id: "purchase-4",
+    amount: 800,
+    createdAt: "2025-01-03T16:45:00Z",
+    points: 40,
+    business_id: "business-3",
+    customer_id: "customer-1",
+    isVoided: false,
+    paymentMethod: "Tarjeta de crédito",
+  },
+]
+
+export const mockRedeems: Redeem[] = [
+  {
+    id: "redeem-1",
+    reward_id: "reward-1",
+    business_id: "business-1",
+    customer_id: "customer-1",
+    createdAt: "2025-01-09T11:00:00Z",
+    pointsUsed: 100,
+  },
+  {
+    id: "redeem-2",
+    reward_id: "reward-3",
+    business_id: "business-2",
+    customer_id: "customer-1",
+    createdAt: "2025-01-06T13:30:00Z",
+    pointsUsed: 150,
+  },
+]
+
+export const mockPointsLedger: PointsLedger[] = [
+  {
+    id: "ledger-1",
+    business_id: "business-1",
+    customer_id: "customer-1",
+    points_change: 50,
+    type: "earn",
+    created_at: "2025-01-01T10:00:00Z",
+    reason: "Bienvenida",
+  },
+  {
+    id: "ledger-2",
+    business_id: "business-1",
+    customer_id: "customer-1",
+    purchase_id: "purchase-3",
+    points_change: 35,
+    type: "earn",
+    created_at: "2025-01-05T09:15:00Z",
+    reason: "Compra",
+  },
+  {
+    id: "ledger-3",
+    business_id: "business-1",
+    customer_id: "customer-1",
+    redeem_id: "redeem-1",
+    points_change: -100,
+    type: "redeem",
+    created_at: "2025-01-09T11:00:00Z",
+    reason: "Canje: Café Gratis",
+  },
+  {
+    id: "ledger-4",
+    business_id: "business-1",
+    customer_id: "customer-1",
+    purchase_id: "purchase-1",
+    points_change: 50,
+    type: "earn",
+    created_at: "2025-01-10T10:30:00Z",
+    reason: "Compra",
+  },
+  {
+    id: "ledger-5",
+    business_id: "business-2",
+    customer_id: "customer-1",
+    points_change: 100,
+    type: "earn",
+    created_at: "2025-01-02T12:00:00Z",
+    reason: "Bienvenida",
+  },
+  {
+    id: "ledger-6",
+    business_id: "business-2",
+    customer_id: "customer-1",
+    redeem_id: "redeem-2",
+    points_change: -150,
+    type: "redeem",
+    created_at: "2025-01-06T13:30:00Z",
+    reason: "Canje: Postre Gratis",
+  },
+  {
+    id: "ledger-7",
+    business_id: "business-2",
+    customer_id: "customer-1",
+    purchase_id: "purchase-2",
+    points_change: 120,
+    type: "earn",
+    created_at: "2025-01-08T14:20:00Z",
+    reason: "Compra",
+  },
+  {
+    id: "ledger-8",
+    business_id: "business-3",
+    customer_id: "customer-1",
+    purchase_id: "purchase-4",
+    points_change: 40,
+    type: "earn",
+    created_at: "2025-01-03T16:45:00Z",
+    reason: "Compra",
+  },
+]

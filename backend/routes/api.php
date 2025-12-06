@@ -5,6 +5,7 @@ use App\Http\Controllers\Business\CustomerController;
 use App\Http\Controllers\Business\UserController;
 use App\Http\Controllers\Business\RewardController;
 use App\Http\Controllers\Business\PurchaseController;
+use App\Http\Controllers\Customer\AuthController as CustomerAuthController;
 use App\Http\Controllers\ContactController;
 use Illuminate\Support\Facades\Route;
 
@@ -92,6 +93,25 @@ Route::prefix('business')->group(function () {
         Route::get('/', 'get');           // GET list with filters
 
         Route::post('/', 'create');       // POST create purchase
+    });
+});
+
+// -------------------------
+// CUSTOMER PORTAL
+// -------------------------
+Route::prefix('customer')->group(function () {
+
+    // -------------------------
+    // AUTH
+    // -------------------------
+    Route::prefix('auth')->controller(CustomerAuthController::class)->group(function () {
+        Route::post('/register', 'register');
+        
+        Route::post('/login', 'login');
+        
+        Route::post('/logout', 'logout')->middleware('auth:sanctum');
+        
+        Route::get('/me', 'me')->middleware('auth:sanctum');
     });
 });
 

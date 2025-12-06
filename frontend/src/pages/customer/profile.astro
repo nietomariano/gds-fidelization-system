@@ -1,0 +1,103 @@
+---
+import CustomerLayout from "../../layouts/Customer/CustomerLayout.astro";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { User, Mail, Phone } from "lucide-react";
+
+// TODO: Obtener estos datos del backend
+const customer = {
+  name: "Cliente",
+  email: "",
+  phoneNumber: "",
+  profilePic: null,
+  createdAt: new Date().toISOString(),
+};
+
+const initials = customer.name
+  .split(" ")
+  .map((n) => n[0])
+  .join("")
+  .toUpperCase();
+---
+
+<CustomerLayout title="Mi Perfil">
+  <div class="space-y-6">
+    <div>
+      <h2 class="text-3xl font-bold tracking-tight">Mi Perfil</h2>
+      <p class="text-muted-foreground">Información de tu cuenta</p>
+    </div>
+
+    <Card>
+      <CardHeader>
+        <CardTitle>Información Personal</CardTitle>
+        <CardDescription>Tus datos básicos de perfil</CardDescription>
+      </CardHeader>
+      <CardContent>
+        
+        <div class="space-y-6">
+          <div class="flex items-center gap-4">
+            <div class="relative size-20 overflow-hidden rounded-full bg-muted flex items-center justify-center">
+              {customer.profilePic ? (
+                <img src={customer.profilePic} alt={customer.name} class="size-full object-cover" />
+              ) : (
+                <span class="text-2xl font-semibold text-muted-foreground">{initials}</span>
+              )}
+            </div>
+            <div>
+              <h3 class="text-xl font-semibold">{customer.name}</h3>
+              <p class="text-sm text-muted-foreground">
+                Cliente desde {new Date(customer.createdAt).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <label for="name" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <User className="mr-2 inline size-4" />
+                Nombre Completo
+              </label>
+              <input
+                id="name"
+                type="text"
+                value={customer.name}
+                disabled
+                class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed opacity-50"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label for="email" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <Mail className="mr-2 inline size-4" />
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={customer.email || "No especificado"}
+                disabled
+                class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed opacity-50"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label for="phone" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <Phone className="mr-2 inline size-4" />
+                Teléfono
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                value={customer.phoneNumber || "No especificado"}
+                disabled
+                class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed opacity-50"
+              />
+            </div>
+          </div>
+
+          <p class="text-sm text-muted-foreground">
+            Esta información es de solo lectura. Para modificar tus datos, contacta al soporte.
+          </p>
+        </CardContent>
+    </Card>
+  </div>
+</CustomerLayout>

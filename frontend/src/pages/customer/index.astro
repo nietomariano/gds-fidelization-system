@@ -1,0 +1,185 @@
+---
+import CustomerLayout from "../../layouts/Customer/CustomerLayout.astro";
+import { Store, ShoppingBag, Gift, TrendingUp, ArrowRight } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Pathname } from "@/config/Pathname";
+
+// TODO: Obtener estos datos del backend
+const customerName = "Cliente";
+const totalBusinesses = 0;
+const totalPurchases = 0;
+const totalRedeems = 0;
+const businessesWithPoints: any[] = [];
+const recentPurchases: any[] = [];
+const recentRedeems: any[] = [];
+---
+
+<CustomerLayout title="Dashboard">
+  <div class="space-y-6">
+    <div>
+      <h2 class="text-3xl font-bold tracking-tight">Bienvenido, {customerName}</h2>
+      <p class="text-muted-foreground">Resumen de tus puntos y actividad reciente</p>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Comercios Activos</CardTitle>
+          <Store className="size-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div class="text-2xl font-bold">{totalBusinesses}</div>
+          <p class="text-xs text-muted-foreground">Comercios con puntos acumulados</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Compras Este Mes</CardTitle>
+          <ShoppingBag className="size-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div class="text-2xl font-bold">{totalPurchases}</div>
+          <p class="text-xs text-muted-foreground">Transacciones realizadas</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Canjes Realizados</CardTitle>
+          <Gift className="size-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div class="text-2xl font-bold">{totalRedeems}</div>
+          <p class="text-xs text-muted-foreground">Recompensas canjeadas</p>
+        </CardContent>
+      </Card>
+    </div>
+
+    <!-- Points by Business -->
+    <Card>
+      <CardHeader>
+        <div class="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="size-5 text-primary" />
+              Mis Puntos por Comercio
+            </CardTitle>
+            <CardDescription>Puntos acumulados en cada comercio</CardDescription>
+          </div>
+          <a href={Pathname.CUSTOMER_BUSINESSES}>
+            <Button variant="outline" size="sm">
+              Ver todos
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
+          </a>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {businessesWithPoints.length === 0 ? (
+          <div class="flex flex-col items-center justify-center py-12">
+            <Store className="size-16 text-muted-foreground mb-4" />
+            <p class="text-muted-foreground">Aún no tienes puntos en ningún comercio</p>
+          </div>
+        ) : (
+          <div class="space-y-3">
+            {businessesWithPoints.map((business: any) => (
+              <a href={`${Pathname.CUSTOMER_BUSINESSES}/${business.id}`}>
+                <div class="flex items-center justify-between rounded-lg border border-border p-4 transition-colors hover:bg-muted/50">
+                  <div class="flex items-center gap-3">
+                    <img
+                      src={business.profilePicture || "/placeholder.svg?height=40&width=40"}
+                      alt={business.name}
+                      class="size-10 rounded-lg object-cover"
+                    />
+                    <div>
+                      <p class="font-medium">{business.name}</p>
+                      <p class="text-xs text-muted-foreground">{business.address}</p>
+                    </div>
+                  </div>
+                  <Badge variant="default" className="bg-primary text-lg">
+                    {business.points} pts
+                  </Badge>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+
+    <!-- Recent Activity -->
+    <div class="grid gap-4 md:grid-cols-2">
+      <!-- Recent Purchases -->
+      <Card>
+        <CardHeader>
+          <div class="flex items-center justify-between">
+            <CardTitle>Últimas Compras</CardTitle>
+            <a href={Pathname.CUSTOMER_HISTORY}>
+              <Button variant="ghost" size="sm">Ver todo</Button>
+            </a>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {recentPurchases.length === 0 ? (
+            <div class="flex flex-col items-center justify-center py-8">
+              <ShoppingBag className="size-12 text-muted-foreground mb-2" />
+              <p class="text-sm text-muted-foreground">No hay compras recientes</p>
+            </div>
+          ) : (
+            <div class="space-y-3">
+              {recentPurchases.map((purchase: any) => (
+                <div class="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <p class="font-medium">{purchase.businessName}</p>
+                    <p class="text-xs text-muted-foreground">
+                      ${purchase.amount.toFixed(2)} • +{purchase.points} pts
+                    </p>
+                  </div>
+                  <p class="text-xs text-muted-foreground">{purchase.date}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <!-- Recent Redeems -->
+      <Card>
+        <CardHeader>
+          <div class="flex items-center justify-between">
+            <CardTitle>Últimos Canjes</CardTitle>
+            <a href={Pathname.CUSTOMER_HISTORY}>
+              <Button variant="ghost" size="sm">Ver todo</Button>
+            </a>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {recentRedeems.length === 0 ? (
+            <div class="flex flex-col items-center justify-center py-8">
+              <Gift className="size-12 text-muted-foreground mb-2" />
+              <p class="text-sm text-muted-foreground">No hay canjes recientes</p>
+            </div>
+          ) : (
+            <div class="space-y-3">
+              {recentRedeems.map((redeem: any) => (
+                <div class="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <p class="font-medium">{redeem.rewardName}</p>
+                    <p class="text-xs text-muted-foreground">
+                      {redeem.businessName} • -{redeem.pointsUsed} pts
+                    </p>
+                  </div>
+                  <p class="text-xs text-muted-foreground">{redeem.date}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</CustomerLayout>

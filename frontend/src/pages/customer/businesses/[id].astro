@@ -1,0 +1,288 @@
+---
+import CustomerLayout from "../../../layouts/Customer/CustomerLayout.astro";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Info, AlertCircle, MapPin, Instagram, Facebook, Phone, Mail } from "lucide-react";
+
+const { id } = Astro.params;
+
+// TODO: Obtener estos datos del backend
+const business = {
+  id,
+  name: "Comercio",
+  address: "",
+  profilePicture: null,
+  instagramUrl: "",
+  facebookUrl: "",
+  phoneNumber: "",
+  email: "",
+};
+
+const currentPoints = 0;
+const loyaltyConfig: any = null;
+const purchases: any[] = [];
+const redeems: any[] = [];
+const ledgerEntries: any[] = [];
+const businessRewards: any[] = [];
+
+// Obtener el tab activo de la URL
+const url = new URL(Astro.request.url);
+const activeTab = url.searchParams.get('tab') || 'resumen';
+---
+
+<CustomerLayout title={business.name}>
+  <div class="space-y-6">
+    <div>
+      <h2 class="text-3xl font-bold tracking-tight">{business.name}</h2>
+      <p class="text-muted-foreground">Detalles y puntos en este comercio</p>
+    </div>
+
+    <!-- Points Badge -->
+    <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+      <div class="p-6 text-center">
+        <p class="text-sm text-muted-foreground mb-2">Tus puntos en {business.name}</p>
+        <p class="text-5xl font-bold text-primary">{currentPoints}</p>
+        <p class="text-sm text-muted-foreground mt-2">puntos disponibles</p>
+      </div>
+    </Card>
+
+    <!-- Tabs -->
+    <div class="w-full">
+      <div class="border-b border-border">
+        <div class="flex space-x-2 overflow-x-auto">
+          <a href={`?tab=resumen`} class={`inline-flex items-center justify-center whitespace-nowrap rounded-t-md px-3 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 ${activeTab === 'resumen' ? 'bg-background text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            Resumen
+          </a>
+          <a href={`?tab=puntos`} class={`inline-flex items-center justify-center whitespace-nowrap rounded-t-md px-3 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 ${activeTab === 'puntos' ? 'bg-background text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            Mis Puntos
+          </a>
+          <a href={`?tab=recompensas`} class={`inline-flex items-center justify-center whitespace-nowrap rounded-t-md px-3 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 ${activeTab === 'recompensas' ? 'bg-background text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            Recompensas
+          </a>
+          <a href={`?tab=compras`} class={`inline-flex items-center justify-center whitespace-nowrap rounded-t-md px-3 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 ${activeTab === 'compras' ? 'bg-background text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            Compras
+          </a>
+          <a href={`?tab=canjes`} class={`inline-flex items-center justify-center whitespace-nowrap rounded-t-md px-3 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 ${activeTab === 'canjes' ? 'bg-background text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            Canjes
+          </a>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        {activeTab === 'resumen' && (
+          <div class="space-y-4">
+            <!-- Business Info Card -->
+            <Card className="overflow-hidden">
+              <div class="p-4">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <img
+                    src={business.profilePicture || "/placeholder.svg?height=80&width=80"}
+                    alt={business.name}
+                    class="size-20 rounded-lg object-cover"
+                  />
+                  <div class="flex-1 space-y-2">
+                    <h3 class="text-lg font-semibold">{business.name}</h3>
+                    {business.address && (
+                      <div class="flex items-center gap-1 text-sm text-muted-foreground">
+                        <MapPin className="size-3" />
+                        {business.address}
+                      </div>
+                    )}
+                    <div class="flex gap-2">
+                      {business.instagramUrl && (
+                        <a href={business.instagramUrl} target="_blank" rel="noopener noreferrer" class="text-muted-foreground hover:text-primary">
+                          <Instagram className="size-4" />
+                        </a>
+                      )}
+                      {business.facebookUrl && (
+                        <a href={business.facebookUrl} target="_blank" rel="noopener noreferrer" class="text-muted-foreground hover:text-primary">
+                          <Facebook className="size-4" />
+                        </a>
+                      )}
+                      {business.phoneNumber && (
+                        <a href={`tel:${business.phoneNumber}`} class="text-muted-foreground hover:text-primary">
+                          <Phone className="size-4" />
+                        </a>
+                      )}
+                      {business.email && (
+                        <a href={`mailto:${business.email}`} class="text-muted-foreground hover:text-primary">
+                          <Mail className="size-4" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <!-- Loyalty Program Info -->
+            {loyaltyConfig && (
+              <Card>
+                <div class="p-6">
+                  <h3 class="text-lg font-semibold flex items-center gap-2 mb-2">
+                    <Info className="size-5 text-primary" />
+                    Programa de Puntos
+                  </h3>
+                  <p class="text-sm text-muted-foreground mb-4">Cómo funcionan los puntos en este comercio</p>
+                  <div class="space-y-3">
+                    <div class="flex items-center justify-between rounded-lg border p-3">
+                      <span class="text-sm text-muted-foreground">Cada ${loyaltyConfig.baseAmount}</span>
+                      <Badge variant="default">+{loyaltyConfig.pointsAwarded} puntos</Badge>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            <!-- Statistics -->
+            <Card>
+              <div class="p-6">
+                <h3 class="text-lg font-semibold mb-4">Estadísticas</h3>
+                <div class="grid gap-4 md:grid-cols-3">
+                  <div class="rounded-lg border p-4">
+                    <p class="text-sm text-muted-foreground">Total Compras</p>
+                    <p class="text-2xl font-bold">{purchases.length}</p>
+                  </div>
+                  <div class="rounded-lg border p-4">
+                    <p class="text-sm text-muted-foreground">Total Canjes</p>
+                    <p class="text-2xl font-bold">{redeems.length}</p>
+                  </div>
+                  <div class="rounded-lg border p-4">
+                    <p class="text-sm text-muted-foreground">Puntos Actuales</p>
+                    <p class="text-2xl font-bold text-primary">{currentPoints}</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'puntos' && (
+          <Card>
+            <div class="p-6">
+              <h3 class="text-lg font-semibold mb-2">Movimientos de Puntos</h3>
+              <p class="text-sm text-muted-foreground mb-4">Historial de cambios en tu saldo de puntos</p>
+              
+              {ledgerEntries.length === 0 ? (
+                <div class="flex flex-col items-center justify-center py-8 text-center">
+                  <AlertCircle className="mb-2 size-12 text-muted-foreground" />
+                  <p class="text-muted-foreground">No hay movimientos registrados</p>
+                </div>
+              ) : (
+                <div class="space-y-3">
+                  {ledgerEntries.map((entry: any) => (
+                    <div class="flex items-center justify-between rounded-lg border p-3">
+                      <div>
+                        <p class="font-medium">{entry.description}</p>
+                        <p class="text-xs text-muted-foreground">{new Date(entry.createdAt).toLocaleString()}</p>
+                      </div>
+                      <span class={`text-lg font-bold ${entry.points > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {entry.points > 0 ? '+' : ''}{entry.points}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {activeTab === 'recompensas' && (
+          <Card>
+            <div class="p-6">
+              <h3 class="text-lg font-semibold mb-2">Recompensas Disponibles</h3>
+              <p class="text-sm text-muted-foreground mb-4">Canjea tus puntos por estas recompensas</p>
+              
+              {businessRewards.length === 0 ? (
+                <div class="flex flex-col items-center justify-center py-8 text-center">
+                  <AlertCircle className="mb-2 size-12 text-muted-foreground" />
+                  <p class="text-muted-foreground">No hay recompensas disponibles</p>
+                </div>
+              ) : (
+                <div class="grid gap-4 md:grid-cols-2">
+                  {businessRewards.map((reward: any) => (
+                    <div class="rounded-lg border p-4">
+                      <h4 class="font-semibold mb-1">{reward.name}</h4>
+                      <p class="text-sm text-muted-foreground mb-3">{reward.description}</p>
+                      <div class="flex items-center justify-between">
+                        <Badge variant="default">{reward.pointsCost} puntos</Badge>
+                        <Button size="sm" disabled={currentPoints < reward.pointsCost}>
+                          Canjear
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {activeTab === 'compras' && (
+          <Card>
+            <div class="p-6">
+              <h3 class="text-lg font-semibold mb-2">Historial de Compras</h3>
+              <p class="text-sm text-muted-foreground mb-4">Compras realizadas en {business.name}</p>
+              
+              {purchases.length === 0 ? (
+                <div class="flex flex-col items-center justify-center py-8 text-center">
+                  <AlertCircle className="mb-2 size-12 text-muted-foreground" />
+                  <p class="text-muted-foreground">No hay compras registradas</p>
+                </div>
+              ) : (
+                <div class="space-y-3">
+                  {purchases.map((purchase: any) => (
+                    <div class="flex items-start justify-between rounded-lg border p-3">
+                      <div>
+                        <p class="font-medium">${purchase.amount.toFixed(2)}</p>
+                        <p class="text-sm text-muted-foreground">
+                          {purchase.paymentMethod} • +{purchase.points} puntos
+                        </p>
+                        <p class="text-xs text-muted-foreground">
+                          {new Date(purchase.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      {purchase.isVoided && <Badge variant="destructive">Anulada</Badge>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {activeTab === 'canjes' && (
+          <Card>
+            <div class="p-6">
+              <h3 class="text-lg font-semibold mb-2">Historial de Canjes</h3>
+              <p class="text-sm text-muted-foreground mb-4">Recompensas canjeadas en {business.name}</p>
+              
+              {redeems.length === 0 ? (
+                <div class="flex flex-col items-center justify-center py-8 text-center">
+                  <AlertCircle className="mb-2 size-12 text-muted-foreground" />
+                  <p class="text-muted-foreground">No hay canjes registrados</p>
+                </div>
+              ) : (
+                <div class="space-y-3">
+                  {redeems.map((redeem: any) => (
+                    <div class="flex items-start justify-between rounded-lg border p-3">
+                      <div>
+                        <p class="font-medium">{redeem.rewardName}</p>
+                        <p class="text-sm text-muted-foreground">-{redeem.pointsUsed} puntos</p>
+                        <p class="text-xs text-muted-foreground">
+                          {new Date(redeem.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <Badge variant="secondary">Canjeado</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+      </div>
+    </div>
+  </div>
+</CustomerLayout>

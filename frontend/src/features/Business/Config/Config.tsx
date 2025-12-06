@@ -1,5 +1,5 @@
-import React from "react";
-
+import React, { useEffect } from "react";
+import { SettingsService } from "../../../api/business/settings/settings.service";
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,21 +10,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Save, DollarSign, Gift, Calendar, TrendingUp, Store, Upload, Instagram, Facebook, Twitter } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { toast } from "sonner"
 
 
 
-//const service = new ConfigurationService();
+const settingsService = new SettingsService();
 
 function ConfiguracionPage() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
   const [businessProfile, setBusinessProfile] = useState({
-    nombre: "FideliApp",
+    nombre: "",
     logo: "/placeholder.svg?height=100&width=100",
-    email: "contacto@fideliapp.com",
-    telefono: "+54 11 1234-5678",
-    direccion: "Av. Corrientes 1234, CABA, Argentina",
-    instagram: "@fideliapp",
-    facebook: "fideliapp",
-    twitter: "@fideliapp",
+    email: "",
+    telefono: "",
+    direccion: "",
+    instagram: "",
+    facebook: "",
+    twitter: "",
   })
 
   const [config, setConfig] = useState({
@@ -48,9 +52,88 @@ function ConfiguracionPage() {
     tipoRedondeo: "ninguno" as "ninguno" | "arriba" | "abajo",
   })
 
-  const handleSave = () => {
-    // Aquí se guardaría la configuración
-    alert("Configuración guardada exitosamente")
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await settingsService.getSettings();
+      const settings = response.data.settings;
+
+      // Cargar datos del negocio
+      setBusinessProfile({
+        nombre: settings.name || "",
+        logo: settings.profilePicture || "/placeholder.svg?height=100&width=100",
+        email: settings.email || "",
+        telefono: settings.phoneNumber || "",
+        direccion: settings.address || "",
+        instagram: settings.instagramUrl || "",
+        facebook: settings.facebookUrl || "",
+        twitter: "",
+      });
+
+      // Cargar configuración de lealtad si existe
+      if (settings.loyaltyConfig) {
+        setConfig({
+          montoBase: settings.loyaltyConfig.baseAmount || 100,
+          puntosOtorgados: settings.loyaltyConfig.pointsAwarded || 1,
+          puntosRegistro: settings.loyaltyConfig.welcomePoints || 50,
+          habilitarPuntosRegistro: settings.loyaltyConfig.welcomeEnabled || false,
+          puntosExpiran: settings.loyaltyConfig.expirationEnabled || false,
+          mesesExpiracion: Math.floor((settings.loyaltyConfig.expirationDays || 365) / 30),
+          habilitarMultiplicadores: false,
+          multiplicadorFinde: 2,
+          tipoRedondeo: "ninguno" as "ninguno" | "arriba" | "abajo",
+        });
+      }
+    } catch (error) {
+      console.error("Error al cargar configuración:", error);
+      toast.error("Error al cargar la configuración");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      
+      const requestData: any = {
+        // Datos del negocio
+        name: businessProfile.nombre,
+        
+        // Configuración de lealtad
+        base_amount: config.montoBase,
+        points_awarded: config.puntosOtorgados,
+        welcome_enabled: config.habilitarPuntosRegistro,
+        welcome_points: config.puntosRegistro,
+        expiration_enabled: config.puntosExpiran,
+        expiration_days: config.mesesExpiracion * 30, // Convertir meses a días
+      };
+
+      // Solo agregar campos opcionales si tienen valor
+      if (businessProfile.email) requestData.email = businessProfile.email;
+      if (businessProfile.telefono) requestData.phone_number = businessProfile.telefono;
+      if (businessProfile.direccion) requestData.address = businessProfile.direccion;
+      if (businessProfile.logo && businessProfile.logo !== "/placeholder.svg?height=100&width=100") {
+        requestData.profile_picture = businessProfile.logo;
+      }
+      if (businessProfile.instagram) requestData.instagram_url = businessProfile.instagram;
+      if (businessProfile.facebook) requestData.facebook_url = businessProfile.facebook;
+
+      await settingsService.updateSettings(requestData);
+      toast.success("Configuración guardada exitosamente");
+      
+      // Recargar datos actualizados
+      await loadSettings();
+    } catch (error: any) {
+      console.error("Error al guardar configuración:", error);
+      toast.error(error.response?.data?.message || "Error al guardar la configuración");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,6 +147,14 @@ function ConfiguracionPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-muted-foreground">Cargando configuración...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-background min-h-screen">
       <div className="border-b border-border bg-card">
@@ -73,9 +164,9 @@ function ConfiguracionPage() {
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Configuración</h1>
               <p className="text-muted-foreground mt-1">Personaliza tu negocio y el sistema de puntos de fidelidad</p>
             </div>
-            <Button onClick={handleSave} className="w-full sm:w-auto">
+            <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
               <Save className="mr-2 h-4 w-4" />
-              Guardar Cambios
+              {saving ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </div>
         </div>
@@ -325,12 +416,24 @@ function ConfiguracionPage() {
                   <Input
                     id="mesesExpiracion"
                     type="number"
-                    value={config.mesesExpiracion}
-                    onChange={(e) => setConfig({ ...config, mesesExpiracion: Number(e.target.value) })}
+                    value={config.mesesExpiracion || ''}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                      setConfig({ ...config, mesesExpiracion: value as number });
+                    }}
+                    onBlur={(e) => {
+                      // Al perder el foco, validar el rango
+                      const value = parseInt(e.target.value, 10);
+                      if (e.target.value === '' || isNaN(value) || value < 1) {
+                        setConfig({ ...config, mesesExpiracion: 1 });
+                      } else if (value > 60) {
+                        setConfig({ ...config, mesesExpiracion: 60 });
+                      }
+                    }}
                     min="1"
                     max="60"
                   />
-                  <p className="text-xs text-muted-foreground">Los puntos expirarán después de este período</p>
+                  <p className="text-xs text-muted-foreground">Los puntos expirarán después de este período (1-60 meses)</p>
                 </div>
               )}
             </CardContent>

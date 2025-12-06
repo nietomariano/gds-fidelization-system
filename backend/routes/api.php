@@ -5,6 +5,7 @@ use App\Http\Controllers\Business\CustomerController;
 use App\Http\Controllers\Business\UserController;
 use App\Http\Controllers\Business\RewardController;
 use App\Http\Controllers\Business\PurchaseController;
+use App\Http\Controllers\Business\SettingsController;
 use App\Http\Controllers\ContactController;
 use Illuminate\Support\Facades\Route;
 
@@ -92,6 +93,17 @@ Route::prefix('business')->group(function () {
         Route::get('/', 'get');           // GET list with filters
 
         Route::post('/', 'create');       // POST create purchase
+    });
+
+    // -------------------------
+    // SETTINGS
+    // -------------------------
+    Route::prefix('settings')->controller(SettingsController::class)
+        ->middleware('auth:sanctum')->group(function () {
+
+        Route::get('/', 'getSettings');   // GET business settings and loyalty config
+
+        Route::put('/', 'updateSettings'); // PUT update business and loyalty config
     });
 });
 

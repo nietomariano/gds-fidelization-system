@@ -39,7 +39,7 @@ class LoyaltyConfig extends Model
     protected $fillable = [
         'business_id', 'base_amount', 'points_awarded',
         'welcome_enabled', 'welcome_points',
-        'expiration_enabled', 'expiration_days'
+        'expiration_enabled', 'expirationDays'
     ];
 
     public function business(): BelongsTo {

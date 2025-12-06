@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -188,38 +187,67 @@ function VentasPage() {
       const monto = Number.parseFloat(nuevaVenta.monto)
       const puntos = Math.floor(monto / 100)
 
-      const response = await purchaseService.createPurchase({
+      await purchaseService.createPurchase({
         customer_id: nuevaVenta.clienteId,
         amount: monto,
         points: puntos,
         payment_method: nuevaVenta.metodoPago,
       })
 
-      const newPurchase = response.data.purchase
-      const venta: Venta = {
-        id: newPurchase.id,
-        fecha: new Date(newPurchase.created_at).toISOString().split("T")[0],
-        hora: new Date(newPurchase.created_at).toTimeString().slice(0, 5),
-        cliente: nuevaVenta.clienteNombre,
-        telefono: clientes.find(c => c.id === nuevaVenta.clienteId)?.telefono || "",
-        monto: newPurchase.amount,
-        puntos: newPurchase.points,
-        metodoPago: newPurchase.payment_method,
-      }
+      // Reload purchases and customers from server
+      console.log('Recargando ventas y clientes...')
+      const [purchasesRes, customersRes] = await Promise.all([
+        purchaseService.getPurchases({ per_page: 100 }),
+        customersService.getCustomers({ per_page: 100 })
+      ])
 
-      setVentas([venta, ...ventas])
+      console.log('Respuesta de ventas:', purchasesRes)
+      console.log('Respuesta de clientes:', customersRes)
+
+      // Update purchases list
+      const mappedPurchases: Venta[] = purchasesRes.data.purchases.map((p: PurchaseModel) => ({
+        id: p.id,
+        fecha: new Date(p.created_at).toISOString().split("T")[0],
+        hora: new Date(p.created_at).toTimeString().slice(0, 5),
+        cliente: p.customer ? `${p.customer.firstName} ${p.customer.lastName || ""}`.trim() : "N/A",
+        telefono: p.customer?.phoneNumber || "",
+        monto: p.amount,
+        puntos: p.points,
+        metodoPago: p.payment_method,
+      }))
+
+      // Update customers list
+      const customerData: CustomerBusinessModel[] = Array.isArray(customersRes.data) ? customersRes.data : []
+      const mappedClientes: Cliente[] = customerData
+        .filter((cb) => cb?.customer)
+        .map((cb) => {
+          const customer = cb.customer
+          return {
+            id: customer.id,
+            nombre: `${customer.firstName} ${customer.lastName || ""}`.trim(),
+            telefono: customer.phoneNumber,
+            puntosAcumulados: cb.cachedPoints,
+          }
+        })
       
-      // Update cliente points
-      setClientes(clientes.map(c => 
-        c.id === nuevaVenta.clienteId 
-          ? { ...c, puntosAcumulados: c.puntosAcumulados + puntos }
-          : c
-      ))
-
+      console.log('Ventas mapeadas:', mappedPurchases.length)
+      console.log('Clientes mapeados:', mappedClientes.length)
+      
+      setVentas(mappedPurchases)
+      setClientes(mappedClientes)
+      
+      console.log('Estado actualizado')
+      
+      // Reset form and close dialog with slight delay to ensure state updates
       setNuevaVenta({ clienteId: "", clienteNombre: "", monto: "", metodoPago: "cash" })
-      setIsDialogOpen(false)
+      
+      // Use setTimeout to ensure state updates are processed before closing
+      setTimeout(() => {
+        setIsDialogOpen(false)
+      }, 100)
     } catch (error) {
       console.error("Error creating purchase:", error)
+      setIsDialogOpen(false)
     } finally {
       setIsCreating(false)
     }
@@ -232,7 +260,7 @@ function VentasPage() {
       venta.telefono.includes(searchTerm)
     const matchFecha = !filtroFecha || venta.fecha === filtroFecha
     const matchMetodo =
-      filtroMetodoPago === "todos" || venta.metodoPago.toLowerCase() === filtroMetodoPago.toLowerCase()
+      filtroMetodoPago === "todos" || venta.metodoPago === filtroMetodoPago
 
     return matchSearch && matchFecha && matchMetodo
   })
@@ -582,7 +610,7 @@ function VentasPage() {
   )
 }
 
-export default React.memo(VentasPage);
+export default VentasPage;
 
 
 

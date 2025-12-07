@@ -1,8 +1,8 @@
 ---
 import BusinessLayout from "../../layouts/Business/BusinessLayout.astro";
-import UnderConstruction from "../../layouts/UnderConstruction.astro";
+import DashboardPage from "@/features/Business/Dashboard/Dashboard";
 ---
 
-<BusinessLayout title='Inicio'>
-  <UnderConstruction />
+<BusinessLayout title='Dashboard'>
+  <DashboardPage client:load />
 </BusinessLayout>

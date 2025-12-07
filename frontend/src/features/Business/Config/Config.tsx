@@ -28,7 +28,7 @@ function ConfiguracionPage() {
     direccion: "",
     instagram: "",
     facebook: "",
-    twitter: "",
+
   })
 
   const [config, setConfig] = useState({
@@ -71,7 +71,6 @@ function ConfiguracionPage() {
         direccion: settings.address || "",
         instagram: settings.instagramUrl || "",
         facebook: settings.facebookUrl || "",
-        twitter: "",
       });
 
       // Cargar configuración de lealtad si existe
@@ -280,14 +279,6 @@ function ConfiguracionPage() {
                       placeholder="usuario"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Twitter className="h-5 w-5 text-muted-foreground" />
-                    <Input
-                      value={businessProfile.twitter}
-                      onChange={(e) => setBusinessProfile({ ...businessProfile, twitter: e.target.value })}
-                      placeholder="@usuario"
-                    />
-                  </div>
                 </div>
               </div>
             </CardContent>
@@ -436,86 +427,6 @@ function ConfiguracionPage() {
                   <p className="text-xs text-muted-foreground">Los puntos expirarán después de este período (1-60 meses)</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Multiplicadores */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Multiplicadores de Puntos</CardTitle>
-                  <CardDescription>Ofrece puntos extra en días especiales</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="habilitarMultiplicadores">Habilitar multiplicadores</Label>
-                  <p className="text-xs text-muted-foreground">Activar puntos extra en fines de semana</p>
-                </div>
-                <Switch
-                  id="habilitarMultiplicadores"
-                  checked={config.habilitarMultiplicadores}
-                  onCheckedChange={(checked) => setConfig({ ...config, habilitarMultiplicadores: checked })}
-                />
-              </div>
-              {config.habilitarMultiplicadores && (
-                <div className="space-y-2">
-                  <Label htmlFor="multiplicadorFinde">Multiplicador de fin de semana</Label>
-                  <Select
-                    value={config.multiplicadorFinde.toString()}
-                    onValueChange={(value) => setConfig({ ...config, multiplicadorFinde: Number(value) })}
-                  >
-                    <SelectTrigger id="multiplicadorFinde">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1.5">1.5x (50% más puntos)</SelectItem>
-                      <SelectItem value="2">2x (Doble de puntos)</SelectItem>
-                      <SelectItem value="3">3x (Triple de puntos)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Sábados y domingos otorgarán más puntos</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Redondeo */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Redondeo de Puntos</CardTitle>
-              <CardDescription>Define cómo se redondean los puntos decimales</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="tipoRedondeo">Tipo de redondeo</Label>
-                <Select
-                  value={config.tipoRedondeo}
-                  onValueChange={(value: "ninguno" | "arriba" | "abajo") =>
-                    setConfig({ ...config, tipoRedondeo: value })
-                  }
-                >
-                  <SelectTrigger id="tipoRedondeo">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ninguno">Sin redondeo (decimales exactos)</SelectItem>
-                    <SelectItem value="abajo">Redondear hacia abajo</SelectItem>
-                    <SelectItem value="arriba">Redondear hacia arriba (favorece al cliente)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {config.tipoRedondeo === "ninguno" && "Ejemplo: 2.7 puntos se guardan como 2.7"}
-                  {config.tipoRedondeo === "abajo" && "Ejemplo: 2.7 puntos se convierten en 2"}
-                  {config.tipoRedondeo === "arriba" && "Ejemplo: 2.7 puntos se convierten en 3"}
-                </p>
-              </div>
             </CardContent>
           </Card>
         </div>

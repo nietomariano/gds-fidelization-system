@@ -129,7 +129,7 @@ class PurchaseController extends Controller
             'customer_id' => $data['customer_id'],
             'purchase_id' => $purchase->id,
             'points_change' => $data['points'],
-            'type' => PointsOperation::EARN->value,
+            'type' => PointsOperation::PURCHASE->value,
             'reason' => 'Compra',
         ]);
 

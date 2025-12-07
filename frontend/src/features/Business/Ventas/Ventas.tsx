@@ -19,9 +19,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { PurchaseService } from "@/api/business/purchase/purchase.service"
 import { CustomersService } from "@/api/business/customers/customers.service"
 import { RewardsService } from "@/api/business/reward/reward.service"
+import { SettingsService } from "@/api/business/settings/settings.service"
 import type { PurchaseModel } from "@/api/business/purchase/purchase.types"
 import type { CustomerBusinessModel } from "@/api/types/Models/CustomerBusinessModel"
 import type { RewardModel } from "@/api/types/Models/RewardModel"
+import type { LoyaltyConfigModel } from "@/api/types/Models/Settings"
 
 // UI type for simplified customer display
 type Cliente = {
@@ -45,6 +47,7 @@ type Venta = {
 const purchaseService = new PurchaseService()
 const customersService = new CustomersService()
 const rewardsService = new RewardsService()
+const settingsService = new SettingsService()
 
 // Helper function to translate payment methods
 const getPaymentMethodLabel = (method: string): string => {
@@ -60,6 +63,7 @@ function VentasPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [ventas, setVentas] = useState<Venta[]>([])
   const [recompensas, setRecompensas] = useState<RewardModel[]>([])
+  const [loyaltyConfig, setLoyaltyConfig] = useState<LoyaltyConfigModel | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
 
@@ -85,10 +89,11 @@ function VentasPage() {
       try {
         setIsLoading(true)
         
-        const [purchasesRes, customersRes, rewardsRes] = await Promise.all([
+        const [purchasesRes, customersRes, rewardsRes, settingsRes] = await Promise.all([
           purchaseService.getPurchases({ per_page: 100 }),
           customersService.getCustomers({ per_page: 100 }),
-          rewardsService.getRewards({ per_page: 100 })
+          rewardsService.getRewards({ per_page: 100 }),
+          settingsService.getSettings()
         ])
 
         // Map purchases to Venta format
@@ -126,6 +131,7 @@ function VentasPage() {
         setVentas(mappedPurchases)
         setClientes(mappedClientes)
         setRecompensas(rewardsRes.data.rewards)
+        setLoyaltyConfig(settingsRes.data.settings.loyaltyConfig || null)
       } catch (error) {
         console.error("Error loading data:", error)
       } finally {
@@ -185,7 +191,11 @@ function VentasPage() {
     try {
       setIsCreating(true)
       const monto = Number.parseFloat(nuevaVenta.monto)
-      const puntos = Math.floor(monto / 100)
+      
+      // Calculate points using loyalty config from database
+      const baseAmount = loyaltyConfig?.baseAmount || 100
+      const pointsAwarded = loyaltyConfig?.pointsAwarded || 1
+      const puntos = Math.floor((monto / baseAmount) * pointsAwarded)
 
       await purchaseService.createPurchase({
         customer_id: nuevaVenta.clienteId,
@@ -194,6 +204,9 @@ function VentasPage() {
         payment_method: nuevaVenta.metodoPago,
       })
 
+      // Reset form first
+      setNuevaVenta({ clienteId: "", clienteNombre: "", monto: "", metodoPago: "cash" })
+      
       // Reload purchases and customers from server
       console.log('Recargando ventas y clientes...')
       const [purchasesRes, customersRes] = await Promise.all([
@@ -203,6 +216,8 @@ function VentasPage() {
 
       console.log('Respuesta de ventas:', purchasesRes)
       console.log('Respuesta de clientes:', customersRes)
+      console.log('Purchases data:', purchasesRes.data)
+      console.log('Purchases array:', purchasesRes.data.purchases)
 
       // Update purchases list
       const mappedPurchases: Venta[] = purchasesRes.data.purchases.map((p: PurchaseModel) => ({
@@ -230,21 +245,19 @@ function VentasPage() {
           }
         })
       
-      console.log('Ventas mapeadas:', mappedPurchases.length)
+      console.log('Ventas mapeadas:', mappedPurchases.length, mappedPurchases)
       console.log('Clientes mapeados:', mappedClientes.length)
+      console.log('Ventas antes:', ventas.length)
       
+      // Update state with completely new references
       setVentas(mappedPurchases)
       setClientes(mappedClientes)
       
-      console.log('Estado actualizado')
+      console.log('✨ Estado actualizado')
       
-      // Reset form and close dialog with slight delay to ensure state updates
-      setNuevaVenta({ clienteId: "", clienteNombre: "", monto: "", metodoPago: "cash" })
-      
-      // Use setTimeout to ensure state updates are processed before closing
-      setTimeout(() => {
-        setIsDialogOpen(false)
-      }, 100)
+      // Close dialog after a brief delay to ensure state updates
+      await new Promise(resolve => setTimeout(resolve, 50))
+      setIsDialogOpen(false)
     } catch (error) {
       console.error("Error creating purchase:", error)
       setIsDialogOpen(false)
@@ -464,7 +477,7 @@ function VentasPage() {
                     <div className="rounded-lg bg-muted p-3">
                       <p className="text-sm text-muted-foreground">Puntos a otorgar:</p>
                       <p className="text-2xl font-bold text-foreground">
-                        {Math.floor(Number.parseFloat(nuevaVenta.monto) / 100)} puntos
+                        {Math.floor((Number.parseFloat(nuevaVenta.monto) / (loyaltyConfig?.baseAmount || 100)) * (loyaltyConfig?.pointsAwarded || 1))} puntos
                       </p>
                     </div>
                   )}

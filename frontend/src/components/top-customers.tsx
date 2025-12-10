@@ -1,79 +1,95 @@
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { DashboardService } from "@/api/business/dashboard/dashboard.service"
+import type { TopCustomer } from "@/api/business/dashboard/dashboard.types"
 
-const topCustomers = [
-  {
-    id: 1,
-    name: "Roberto Sánchez",
-    initials: "RS",
-    points: 2450,
-    visits: 28,
-    badge: "VIP",
-  },
-  {
-    id: 2,
-    name: "Laura Jiménez",
-    initials: "LJ",
-    points: 2180,
-    visits: 24,
-    badge: "VIP",
-  },
-  {
-    id: 3,
-    name: "Miguel Torres",
-    initials: "MT",
-    points: 1890,
-    visits: 21,
-    badge: "Gold",
-  },
-  {
-    id: 4,
-    name: "Carmen Díaz",
-    initials: "CD",
-    points: 1650,
-    visits: 19,
-    badge: "Gold",
-  },
-  {
-    id: 5,
-    name: "José Ramírez",
-    initials: "JR",
-    points: 1420,
-    visits: 16,
-    badge: "Silver",
-  },
-]
+const dashboardService = new DashboardService()
 
 export function TopCustomers() {
+  const [customers, setCustomers] = useState<TopCustomer[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true)
+        const response = await dashboardService.getTopCustomers()
+        setCustomers(response.data)
+      } catch (error) {
+        console.error("Error loading top customers:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadData()
+  }, [])
+
+  const getTierColor = (tier: string) => {
+    switch (tier) {
+      case "Gold":
+        return "bg-yellow-500"
+      case "Silver":
+        return "bg-gray-400"
+      case "Bronze":
+        return "bg-orange-600"
+      default:
+        return "bg-muted"
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Top Clientes</CardTitle>
+          <CardDescription>Clientes con más puntos acumulados</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="animate-pulse flex items-center gap-4">
+                <div className="h-8 w-8 bg-muted rounded-full" />
+                <div className="h-10 w-10 bg-muted rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-muted rounded w-32" />
+                  <div className="h-3 bg-muted rounded w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Mejores Clientes</CardTitle>
+        <CardTitle>Top Clientes</CardTitle>
         <CardDescription>Clientes con más puntos acumulados</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {topCustomers.map((customer, index) => (
-            <div key={customer.id} className="flex items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
-                {index + 1}
+          {customers.map((customer) => (
+            <div key={customer.rank} className="flex items-center gap-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
+                {customer.rank}
               </div>
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                  {customer.initials}
-                </AvatarFallback>
+              <Avatar>
+                <AvatarFallback>{customer.initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1 space-y-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium leading-none text-foreground">{customer.name}</p>
-                  <Badge variant="secondary" className="text-xs">
-                    {customer.badge}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {customer.points.toLocaleString()} pts • {customer.visits} visitas
-                </p>
+                <p className="text-sm font-medium leading-none">{customer.name}</p>
+                <p className="text-xs text-muted-foreground">{customer.visits} visitas</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-semibold">{customer.points.toLocaleString()}</p>
+                <Badge variant="secondary" className={`${getTierColor(customer.tier)} text-white text-xs`}>
+                  {customer.tier}
+                </Badge>
               </div>
             </div>
           ))}

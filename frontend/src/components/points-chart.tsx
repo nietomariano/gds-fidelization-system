@@ -1,18 +1,11 @@
-"use client"
-
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { DashboardService } from "@/api/business/dashboard/dashboard.service"
+import type { PointsChartData } from "@/api/business/dashboard/dashboard.types"
 
-const chartData = [
-  { date: "1 Ene", puntos: 2400 },
-  { date: "5 Ene", puntos: 2800 },
-  { date: "10 Ene", puntos: 3200 },
-  { date: "15 Ene", puntos: 2900 },
-  { date: "20 Ene", puntos: 3800 },
-  { date: "25 Ene", puntos: 4200 },
-  { date: "30 Ene", puntos: 4600 },
-]
+const dashboardService = new DashboardService()
 
 const chartConfig = {
   puntos: {
@@ -22,6 +15,41 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function PointsChart() {
+  const [chartData, setChartData] = useState<PointsChartData[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true)
+        const response = await dashboardService.getPointsChart()
+        setChartData(response.data)
+      } catch (error) {
+        console.error("Error loading points chart:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadData()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Puntos Otorgados</CardTitle>
+          <CardDescription>Tendencia de puntos otorgados en el último mes</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center">
+            <div className="animate-pulse text-muted-foreground">Cargando...</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>

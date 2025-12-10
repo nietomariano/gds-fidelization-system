@@ -1,16 +1,11 @@
-"use client"
-
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { DashboardService } from "@/api/business/dashboard/dashboard.service"
+import type { RewardsChartData } from "@/api/business/dashboard/dashboard.types"
 
-const chartData = [
-  { recompensa: "Descuento 10%", canjes: 89 },
-  { recompensa: "Café Gratis", canjes: 72 },
-  { recompensa: "Producto 2x1", canjes: 65 },
-  { recompensa: "Descuento 20%", canjes: 54 },
-  { recompensa: "Envío Gratis", canjes: 48 },
-]
+const dashboardService = new DashboardService()
 
 const chartConfig = {
   canjes: {
@@ -20,6 +15,41 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function RewardsChart() {
+  const [chartData, setChartData] = useState<RewardsChartData[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true)
+        const response = await dashboardService.getRewardsChart()
+        setChartData(response.data)
+      } catch (error) {
+        console.error("Error loading rewards chart:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadData()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Recompensas Populares</CardTitle>
+          <CardDescription>Las recompensas más canjeadas este mes</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center">
+            <div className="animate-pulse text-muted-foreground">Cargando...</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>

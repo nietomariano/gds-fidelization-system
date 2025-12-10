@@ -105,6 +105,23 @@ Route::prefix('business')->group(function () {
 
         Route::put('/', 'updateSettings'); // PUT update business and loyalty config
     });
+
+    // -------------------------
+    // DASHBOARD
+    // -------------------------
+    Route::prefix('dashboard')->controller(\App\Http\Controllers\Business\DashboardController::class)
+        ->middleware('auth:sanctum')->group(function () {
+
+        Route::get('/stats', 'getStats');                   // GET dashboard statistics
+
+        Route::get('/points-chart', 'getPointsChart');      // GET points chart data
+
+        Route::get('/rewards-chart', 'getRewardsChart');    // GET rewards chart data
+
+        Route::get('/recent-activity', 'getRecentActivity'); // GET recent activity
+
+        Route::get('/top-customers', 'getTopCustomers');    // GET top customers
+    });
 });
 
 // Contact form (outside /business)
